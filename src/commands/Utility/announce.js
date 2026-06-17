@@ -8,6 +8,12 @@ export default {
   data: new SlashCommandBuilder()
     .setName('announce')
     .setDescription('Send an announcement')
+    .addChannelOption(option =>
+      option
+        .setName('channel')
+        .setDescription('Channel to send the announcement')
+        .setRequired(true)
+    )
     .addStringOption(option =>
       option
         .setName('message')
@@ -18,6 +24,7 @@ export default {
 
   async execute(interaction) {
     try {
+      const channel = interaction.options.getChannel('channel');
       const message = interaction.options.getString('message');
 
       const embed = createEmbed({
@@ -25,17 +32,18 @@ export default {
         description: message
       });
 
-      await interaction.channel.send({
+      await channel.send({
         embeds: [embed]
       });
 
       await InteractionHelper.safeReply(interaction, {
-        content: '✅ Announcement sent successfully!'
+        content: `✅ Announcement sent to ${channel}`
       });
 
       logger.info('Announcement command executed', {
         userId: interaction.user.id,
-        guildId: interaction.guildId
+        guildId: interaction.guildId,
+        channelId: channel.id
       });
 
     } catch (error) {
