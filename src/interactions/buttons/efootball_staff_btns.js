@@ -1,5 +1,6 @@
+import { EmbedBuilder } from 'discord.js';
 import { tournamentConfig } from '../../config/tournamentConfig.js';
-import { addPlayerToSlot } from '../../utils/slotManager.js'; // Importing the slot manager
+import { addPlayerToSlot, getAllSlots } from '../../utils/slotManager.js'; 
 
 export default [
     {
@@ -7,13 +8,11 @@ export default [
         async execute(interaction, client) {
             await interaction.deferReply();
             
-            // Check if the user is staff
             if (!interaction.member.permissions.has('ManageChannels')) {
                 return interaction.editReply({ content: '❌ You do not have permission to approve this!' });
             }
 
             try {
-                // Find the player
                 const targetUsername = interaction.channel.name.replace('reg-', '');
                 await interaction.guild.members.fetch();
                 const targetMember = interaction.guild.members.cache.find(m => m.user.username === targetUsername);
@@ -30,9 +29,33 @@ export default [
                     // 3. Send Approved DM with Slot Number
                     const dmMessage = `${tournamentConfig.messages.approvedDM}\n\n🎫 **Your Assigned Slot:** ${assignedSlot}`;
                     await targetMember.send(dmMessage).catch(() => {});
+
+                    // 4. Update the Slot List Channel
+                    const slotChannelId = tournamentConfig.slotListChannelId;
+                    if (slotChannelId) {
+                        const slotChannel = interaction.guild.channels.cache.get(slotChannelId);
+                        if (slotChannel) {
+                            const allSlots = getAllSlots();
+                            const slotText = allSlots.map(p => `**${p.slot}** : <@${p.userId}> (${p.username})`).join('\n');
+                            
+                            const slotEmbed = new EmbedBuilder()
+                                .setTitle('🏆 eFootball Tournament - Slot List 🏆')
+                                .setDescription(slotText || 'No players approved yet.')
+                                .setColor('#FFD700');
+
+                            const messages = await slotChannel.messages.fetch({ limit: 10 });
+                            const oldMessage = messages.find(m => m.author.id === client.user.id && m.embeds.length > 0 && m.embeds[0].title.includes('Slot List'));
+
+                            if (oldMessage) {
+                                await oldMessage.edit({ embeds: [slotEmbed] }); // Edit existing message
+                            } else {
+                                await slotChannel.send({ embeds: [slotEmbed] }); // Send new message if not found
+                            }
+                        }
+                    }
                 }
 
-                // Delete channel
+                // Delete registration channel
                 await interaction.channel.delete();
 
             } catch (error) {

@@ -1,6 +1,7 @@
 export const tournamentConfig = {
     // 1. Roles & Settings
     tournamentRoleId: 'YOUR_ROLE_ID_HERE', // ⚠️ Replace with actual Role ID
+    slotListChannelId: '1496862419568558192',
 
     // 2. Social Media & Sponsor Links (Easily changeable)
     links: {
