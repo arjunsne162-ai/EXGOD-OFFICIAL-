@@ -47,3 +47,10 @@ export const getAllSlots = () => {
     const rawData = fs.readFileSync(slotsFilePath);
     return JSON.parse(rawData);
 };
+
+// Function to clear all slots (Reset)
+export const clearAllSlots = () => {
+    initSlotsFile();
+    // Overwrite the file with an empty array
+    fs.writeFileSync(slotsFilePath, JSON.stringify([]));
+};
