@@ -17,26 +17,28 @@ export default [
                 await interaction.guild.members.fetch();
                 const targetMember = interaction.guild.members.cache.find(m => m.user.username === targetUsername);
 
+                // Extract Details from Embed
+                const embed = interaction.message.embeds[0];
+                const gameName = embed.fields.find(f => f.name === 'IGN')?.value || 'Unknown';
+                const phone = embed.fields.find(f => f.name === 'Phone')?.value || 'Unknown';
+
                 if (targetMember) {
-                    // 1. Assign Role
                     const roleId = tournamentConfig.tournamentRoleId; 
                     const role = interaction.guild.roles.cache.get(roleId);
                     if (role) await targetMember.roles.add(role);
 
-                    // 2. Save player to database and get Slot Number
-                    const assignedSlot = addPlayerToSlot(targetMember.user.username, targetMember.id);
+                    // Save with IGN and Phone
+                    const assignedSlot = addPlayerToSlot(targetMember.user.username, targetMember.id, gameName, phone);
 
-                    // 3. Send Approved DM with Slot Number
                     const dmMessage = `${tournamentConfig.messages.approvedDM}\n\n🎫 **Your Assigned Slot:** ${assignedSlot}`;
                     await targetMember.send(dmMessage).catch(() => {});
 
-                    // 4. Update the Slot List Channel
                     const slotChannelId = tournamentConfig.slotListChannelId;
                     if (slotChannelId) {
                         const slotChannel = interaction.guild.channels.cache.get(slotChannelId);
                         if (slotChannel) {
                             const allSlots = getAllSlots();
-                            const slotText = allSlots.map(p => `**${p.slot}** : <@${p.userId}> (${p.username})`).join('\n');
+                            const slotText = allSlots.map(p => `**${p.slot}** : ${p.gameName} (Phone: ${p.phone})`).join('\n');
                             
                             const slotEmbed = new EmbedBuilder()
                                 .setTitle('🏆 eFootball Tournament - Slot List 🏆')
@@ -47,15 +49,14 @@ export default [
                             const oldMessage = messages.find(m => m.author.id === client.user.id && m.embeds.length > 0 && m.embeds[0].title.includes('Slot List'));
 
                             if (oldMessage) {
-                                await oldMessage.edit({ embeds: [slotEmbed] }); // Edit existing message
+                                await oldMessage.edit({ embeds: [slotEmbed] });
                             } else {
-                                await slotChannel.send({ embeds: [slotEmbed] }); // Send new message if not found
+                                await slotChannel.send({ embeds: [slotEmbed] });
                             }
                         }
                     }
                 }
 
-                // Delete registration channel
                 await interaction.channel.delete();
 
             } catch (error) {
@@ -69,19 +70,13 @@ export default [
         async execute(interaction, client) {
             await interaction.deferReply();
             
-            if (!interaction.member.permissions.has('ManageChannels')) {
-                return interaction.editReply({ content: '❌ You do not have permission to reject this!' });
-            }
+            if (!interaction.member.permissions.has('ManageChannels')) return interaction.editReply({ content: '❌ No permission!' });
 
             try {
                 const targetUsername = interaction.channel.name.replace('reg-', '');
-                await interaction.guild.members.fetch();
                 const targetMember = interaction.guild.members.cache.find(m => m.user.username === targetUsername);
 
-                if (targetMember) {
-                    await targetMember.send(tournamentConfig.messages.rejectedDM).catch(() => {});
-                }
-
+                if (targetMember) await targetMember.send(tournamentConfig.messages.rejectedDM).catch(() => {});
                 await interaction.channel.delete();
 
             } catch (error) {

@@ -1,37 +1,33 @@
 import fs from 'fs';
 import path from 'path';
 
-// Path to store the slots data
 const slotsFilePath = path.resolve('./slots.json');
 
-// Function to initialize the file if it doesn't exist
 const initSlotsFile = () => {
     if (!fs.existsSync(slotsFilePath)) {
         fs.writeFileSync(slotsFilePath, JSON.stringify([]));
     }
 };
 
-// Function to add a new approved player and assign a slot
-export const addPlayerToSlot = (username, userId) => {
+export const addPlayerToSlot = (discordUsername, userId, gameName, phone) => {
     initSlotsFile();
     
-    // Read existing data
     const rawData = fs.readFileSync(slotsFilePath);
     const slots = JSON.parse(rawData);
 
-    // Check if player is already registered
     const existingPlayer = slots.find(player => player.userId === userId);
     if (existingPlayer) return existingPlayer.slot;
 
-    // Assign new slot number (e.g., Slot 001)
+    // Change format to Slot 1, Slot 2 etc.
     const newSlotNumber = slots.length + 1;
-    const formattedSlot = `Slot ${String(newSlotNumber).padStart(3, '0')}`;
+    const formattedSlot = `Slot ${newSlotNumber}`;
 
-    // Save player data
     const newPlayer = {
         slot: formattedSlot,
-        username: username,
+        discordUsername: discordUsername,
         userId: userId,
+        gameName: gameName,
+        phone: phone,
         approvedAt: new Date().toISOString()
     };
 
@@ -41,16 +37,13 @@ export const addPlayerToSlot = (username, userId) => {
     return formattedSlot;
 };
 
-// Function to get all registered players
 export const getAllSlots = () => {
     initSlotsFile();
     const rawData = fs.readFileSync(slotsFilePath);
     return JSON.parse(rawData);
 };
 
-// Function to clear all slots (Reset)
 export const clearAllSlots = () => {
     initSlotsFile();
-    // Overwrite the file with an empty array
     fs.writeFileSync(slotsFilePath, JSON.stringify([]));
 };
