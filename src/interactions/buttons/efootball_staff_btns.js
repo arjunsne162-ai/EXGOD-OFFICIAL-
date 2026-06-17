@@ -1,31 +1,33 @@
+import { tournamentConfig } from '../../config/tournamentConfig.js'; // Importing the config file
+
 export default [
     {
         name: 'efootball_approve_reg',
         async execute(interaction, client) {
             await interaction.deferReply();
             
-            // 1. Check if the user is staff (Only those with Manage Channels permission)
+            // Check if the user is staff (Manage Channels permission)
             if (!interaction.member.permissions.has('ManageChannels')) {
                 return interaction.editReply({ content: '❌ You do not have permission to approve this!' });
             }
 
             try {
-                // Find the player from the channel name (eg: reg-arjun)
+                // Find the player from the channel name
                 const targetUsername = interaction.channel.name.replace('reg-', '');
                 await interaction.guild.members.fetch();
                 const targetMember = interaction.guild.members.cache.find(m => m.user.username === targetUsername);
 
                 if (targetMember) {
-                    // 2. Assign the tournament role to the player
-                    const roleId = '1489190117666197534'; // ⚠️ Insert your tournament role ID here!
+                    // 1. Fetch Role ID from config and assign it
+                    const roleId = tournamentConfig.tournamentRoleId; 
                     const role = interaction.guild.roles.cache.get(roleId);
                     if (role) await targetMember.roles.add(role);
 
-                    // 3. Send a DM to the player
-                    await targetMember.send(`🎉 Congratulations! Your registration for the eFootball Tournament has been **Approved**.`).catch(() => {});
+                    // 2. Send Approved DM from config
+                    await targetMember.send(tournamentConfig.messages.approvedDM).catch(() => {});
                 }
 
-                // 4. Delete the registration channel
+                // Delete the channel
                 await interaction.channel.delete();
 
             } catch (error) {
@@ -45,17 +47,17 @@ export default [
             }
 
             try {
-                // Find the player from the channel name
+                // Find the player
                 const targetUsername = interaction.channel.name.replace('reg-', '');
                 await interaction.guild.members.fetch();
                 const targetMember = interaction.guild.members.cache.find(m => m.user.username === targetUsername);
 
                 if (targetMember) {
-                    // Send rejection notification via DM
-                    await targetMember.send(`❌ Sorry, your registration for the eFootball Tournament has been **Rejected**. Please double-check if your screenshots and provided details are correct.`).catch(() => {});
+                    // Send Rejected DM from config
+                    await targetMember.send(tournamentConfig.messages.rejectedDM).catch(() => {});
                 }
 
-                // Delete the registration channel
+                // Delete the channel
                 await interaction.channel.delete();
 
             } catch (error) {
