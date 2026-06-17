@@ -7,32 +7,52 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('announce')
-    .setDescription('Send an announcement')
+    .setDescription('Send a professional announcement')
+
     .addChannelOption(option =>
       option
         .setName('channel')
         .setDescription('Channel to send the announcement')
         .setRequired(true)
     )
+
+    .addStringOption(option =>
+      option
+        .setName('title')
+        .setDescription('Announcement title')
+        .setRequired(true)
+    )
+
     .addStringOption(option =>
       option
         .setName('message')
         .setDescription('Announcement message')
         .setRequired(true)
     )
+
+    .addBooleanOption(option =>
+      option
+        .setName('everyone')
+        .setDescription('Ping everyone?')
+        .setRequired(false)
+    )
+
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
     try {
       const channel = interaction.options.getChannel('channel');
+      const title = interaction.options.getString('title');
       const message = interaction.options.getString('message');
+      const everyone = interaction.options.getBoolean('everyone') ?? false;
 
       const embed = createEmbed({
-        title: '📢 Announcement',
+        title: `📢 ${title}`,
         description: message
       });
 
       await channel.send({
+        content: everyone ? '@everyone' : undefined,
         embeds: [embed]
       });
 
