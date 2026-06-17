@@ -1,83 +1,29 @@
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ChannelType, PermissionFlagsBits, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
 
-export default [
-    {
-        name: 'efootball_register_btn',
-        async execute(interaction, client) {
-            // Create the Modal Popup
-            const modal = new ModalBuilder()
-                .setCustomId('efootball_reg_modal')
-                .setTitle('Tournament Registration');
+export default {
+    name: 'efootball_register_btn',
+    async execute(interaction, client) {
+        const modal = new ModalBuilder()
+            .setCustomId('efootball_reg_modal')
+            .setTitle('Tournament Registration');
 
-            const gameNameInput = new TextInputBuilder()
-                .setCustomId('game_name')
-                .setLabel("In-Game Name (IGN)")
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+        const gameNameInput = new TextInputBuilder()
+            .setCustomId('game_name')
+            .setLabel("In-Game Name (IGN)")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
 
-            const phoneInput = new TextInputBuilder()
-                .setCustomId('phone_number')
-                .setLabel("Phone Number")
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+        const phoneInput = new TextInputBuilder()
+            .setCustomId('phone_number')
+            .setLabel("Phone Number")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
 
-            modal.addComponents(
-                new ActionRowBuilder().addComponents(gameNameInput),
-                new ActionRowBuilder().addComponents(phoneInput)
-            );
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(gameNameInput),
+            new ActionRowBuilder().addComponents(phoneInput)
+        );
 
-            // Show the form to the user
-            await interaction.showModal(modal);
-        }
-    },
-    {
-        name: 'efootball_reg_modal',
-        async execute(interaction, client) {
-            await interaction.deferReply({ ephemeral: true });
-
-            const gameName = interaction.fields.getTextInputValue('game_name');
-            const phone = interaction.fields.getTextInputValue('phone_number');
-            const { guild, user } = interaction;
-
-            try {
-                // Create Private Channel
-                const regChannel = await guild.channels.create({
-                    name: `reg-${user.username}`,
-                    type: ChannelType.GuildText,
-                    permissionOverwrites: [
-                        { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-                        { id: user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles] }, 
-                    ],
-                });
-
-                // Embed with Form Details
-                const formEmbed = new EmbedBuilder()
-                    .setTitle(`📝 Registration: ${user.username}`)
-                    .setDescription('**Player Details Saved!**')
-                    .addFields(
-                        { name: 'IGN', value: gameName, inline: true },
-                        { name: 'Phone', value: phone, inline: true }
-                    )
-                    .setColor('#0099ff');
-
-                const staffButtons = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('efootball_approve_reg').setLabel('Approve').setStyle(ButtonStyle.Success),
-                    new ButtonBuilder().setCustomId('efootball_reject_reg').setLabel('Reject').setStyle(ButtonStyle.Danger)
-                );
-
-                // Ask for Screenshots here
-                await regChannel.send({ 
-                    content: `<@${user.id}> ✅ **Details saved!**\n\n📸 **Action Required:** Please upload your required **Screenshots** here. Staff will approve your registration after verifying the images.`, 
-                    embeds: [formEmbed], 
-                    components: [staffButtons] 
-                });
-
-                await interaction.editReply({ content: `✅ Details submitted! Please go to your channel to upload screenshots: ${regChannel}` });
-
-            } catch (error) {
-                console.error(error);
-                await interaction.editReply({ content: '❌ Error processing your registration.' });
-            }
-        }
+        await interaction.showModal(modal);
     }
-];
+};
