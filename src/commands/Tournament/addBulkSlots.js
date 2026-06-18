@@ -1,35 +1,43 @@
-import { ContextMenuCommandBuilder, ApplicationCommandType, PermissionFlagsBits } from 'discord.js';
 import { addPlayerToSlot } from '../../utils/slotManager.js';
 
 export default {
-    data: new ContextMenuCommandBuilder()
-        .setName('Add Bulk Slots')
-        .setType(ApplicationCommandType.Message)
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
-
+    name: 'bulk_add_modal',
     async execute(interaction) {
-        // ബോട്ടിന് മറുപടി തരാൻ കൂടുതൽ സമയം നൽകുന്നു
         await interaction.deferReply({ ephemeral: true });
         
-        const content = interaction.targetMessage.content;
-        const lines = content.split('\n');
+        const list = interaction.fields.getTextInputValue('players_list');
+        const lines = list.split('\n');
         let successCount = 0;
+        let errorCount = 0;
 
         for (const line of lines) {
-            if (!line.includes('-')) continue;
-            
-            const lastHyphenIndex = line.lastIndexOf('-');
-            const ign = line.substring(0, lastHyphenIndex).trim();
-            const phone = line.substring(lastHyphenIndex + 1).trim();
+            if (!line.trim()) continue;
 
-            if (ign && phone) {
-                // ലൂപ്പിനുള്ളിൽ ഡാറ്റ ആഡ് ചെയ്യുന്നു
-                addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
-                successCount++;
+            try {
+                // വരിയുടെ അവസാനത്തെ ഹൈഫൻ കണ്ടെത്തുന്നു (അതുകൊണ്ട് പേരിൽ underscore വന്നാലും പ്രശ്നമില്ല)
+                const lastHyphenIndex = line.lastIndexOf('-');
+                if (lastHyphenIndex === -1) {
+                    errorCount++;
+                    continue;
+                }
+
+                const ign = line.substring(0, lastHyphenIndex).trim();
+                const phone = line.substring(lastHyphenIndex + 1).trim();
+
+                if (ign && phone) {
+                    // സ്ലോട്ട് ആഡ് ചെയ്യുന്നു
+                    addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
+                    successCount++;
+                } else {
+                    errorCount++;
+                }
+            } catch (e) {
+                errorCount++;
             }
         }
 
-        // ഫൈനൽ മറുപടി
-        await interaction.editReply({ content: `✅ Successfully added **${successCount}** players!` });
+        await interaction.editReply({ 
+            content: `✅ Successfully added **${successCount}** players!\n❌ Failed lines: **${errorCount}**` 
+        });
     }
 };
