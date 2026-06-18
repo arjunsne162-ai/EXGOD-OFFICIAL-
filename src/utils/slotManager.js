@@ -6,15 +6,18 @@ import path from 'path';
 
 // 4-ാം വരി മുതൽ 14-ാം വരി വരെ ഈ കോഡ് പേസ്റ്റ് ചെയ്യുക:
 export const getAllSlots = () => {
-    const absolutePath = path.resolve('./slots.json');
-    if (!fs.existsSync(absolutePath)) {
-        console.log("❌ File not found at:", absolutePath);
+    try {
+        if (!fs.existsSync('./slots.json')) {
+            console.log("⚠️ slots.json file missing! Creating new one...");
+            fs.writeFileSync('./slots.json', JSON.stringify([]));
+            return [];
+        }
+        const rawData = fs.readFileSync('./slots.json', 'utf8');
+        return JSON.parse(rawData);
+    } catch (error) {
+        console.error("❌ Error reading slots.json:", error);
         return [];
     }
-    const rawData = fs.readFileSync(absolutePath, 'utf8');
-    const data = JSON.parse(rawData);
-    console.log("✅ Current Data in JSON:", data);
-    return data;
 };
     
     slots.push({
