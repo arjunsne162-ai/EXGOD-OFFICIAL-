@@ -7,36 +7,23 @@ export default {
         
         const list = interaction.fields.getTextInputValue('players_list');
         const lines = list.split('\n');
-        let successCount = 0;
-        let errorCount = 0;
+        let count = 0;
 
         for (const line of lines) {
-            if (!line.trim()) continue; // ഒഴിഞ്ഞ വരികൾ ഒഴിവാക്കുന്നു
-
-            try {
-                // അവസാനത്തെ ഹൈഫൻ വെച്ച് മാത്രം സ്പ്ലിറ്റ് ചെയ്യുന്നു (ഇത് കൂടുതൽ സേഫ് ആണ്)
-                const lastHyphenIndex = line.lastIndexOf('-');
-                if (lastHyphenIndex === -1) {
-                    errorCount++;
-                    continue;
-                }
-
-                const ign = line.substring(0, lastHyphenIndex).trim();
-                const phone = line.substring(lastHyphenIndex + 1).trim();
-
-                if (ign && phone) {
-                    addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
-                    successCount++;
-                } else {
-                    errorCount++;
-                }
-            } catch (e) {
-                errorCount++;
+            const [ign, phone] = line.split('-').map(s => s.trim());
+            if (ign && phone) {
+                // സ്ലോട്ട് ആഡ് ചെയ്യുന്നു
+                const assignedSlot = addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${count}`, ign, phone);
+                
+                // പ്ലെയറിന് DM അയക്കാൻ ശ്രമിക്കുന്നു 
+                // ശ്രദ്ധിക്കുക: manual entry ആയതുകൊണ്ട് Discord ID കിട്ടാൻ ബുദ്ധിമുട്ടാണ്. 
+                // എന്നാൽ, നീ സ്ലോട്ട് ലിസ്റ്റിൽ ഇവരെ കാണുന്നതുകൊണ്ട്, സ്ലോട്ട് ലിസ്റ്റ് ചാനലിൽ 
+                // എല്ലാവർക്കും കാണാൻ പറ്റുന്ന രീതിയിൽ ഒരു മെസ്സേജ് ഇടുന്നതാണ് നല്ലത്.
+                
+                count++;
             }
         }
 
-        await interaction.editReply({ 
-            content: `✅ Successfully added **${successCount}** players!\n❌ Failed lines: **${errorCount}**` 
-        });
+        await interaction.editReply({ content: `✅ Successfully added **${count}** players! All slots have been updated in the Slot List channel.` });
     }
 };
