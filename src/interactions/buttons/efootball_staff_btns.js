@@ -6,19 +6,18 @@ export default [
     {
         name: 'efootball_approve_reg',
         async execute(interaction, client) {
-            await interaction.deferReply({ ephemeral: true }); // ephemeral: true ആക്കിയാൽ ബാക്കിയുള്ളവർക്ക് ഈ എറർ കാണില്ല
+            // ആദ്യം ഒരു മറുപടി അയക്കുന്നു (Interaction Failed ഒഴിവാക്കാൻ)
+            await interaction.reply({ content: '✅ Approving registration, please wait...', ephemeral: true });
             
             if (!interaction.member.permissions.has('ManageChannels')) {
                 return interaction.editReply({ content: '❌ You do not have permission to approve this!' });
             }
 
             try {
-                // ചാനൽ പേരിൽ നിന്ന് username എടുക്കുന്നു
                 const targetUsername = interaction.channel.name.replace('reg-', '');
                 await interaction.guild.members.fetch();
                 const targetMember = interaction.guild.members.cache.find(m => m.user.username === targetUsername);
 
-                // Embed-ൽ നിന്ന് ഡാറ്റ എടുക്കാൻ ശ്രമിക്കുന്നു (ഇവിടെ ഒരു സേഫ്റ്റി ചെക്ക് കൂടെ ചേർക്കുന്നു)
                 const embed = interaction.message.embeds[0];
                 if (!embed) return interaction.editReply({ content: '❌ Error: Could not find registration data.' });
 
@@ -30,12 +29,9 @@ export default [
                     const role = interaction.guild.roles.cache.get(roleId);
                     if (role) await targetMember.roles.add(role).catch(console.error);
 
-                    // Slot മാനേജർ ഉപയോഗിക്കുന്നു
                     const assignedSlot = addPlayerToSlot(targetMember.user.username, targetMember.id, gameName, phone);
-
                     await targetMember.send(`✅ Your registration is approved!\n🎫 **Slot:** ${assignedSlot}`).catch(() => {});
 
-                    // സ്ലോട്ട് ലിസ്റ്റ് അപ്ഡേറ്റ് ചെയ്യുന്നു
                     const slotChannel = interaction.guild.channels.cache.get(tournamentConfig.slotListChannelId);
                     if (slotChannel) {
                         const allSlots = getAllSlots();
@@ -54,18 +50,21 @@ export default [
                     }
                 }
 
+                // ചാനൽ ഡിലീറ്റ് ചെയ്യുന്നു
                 await interaction.channel.delete().catch(console.error);
+                // ഫൈനൽ മെസ്സേജ്
                 await interaction.editReply({ content: '✅ Approved successfully!' });
 
             } catch (error) {
                 console.error(error);
-                await interaction.editReply({ content: '❌ Error approving registration. Check console.' });
+                await interaction.editReply({ content: '❌ Error approving registration.' });
             }
         }
     },
+    {
         name: 'efootball_reject_reg',
         async execute(interaction, client) {
-            await interaction.deferReply();
+            await interaction.reply({ content: '❌ Rejecting...', ephemeral: true });
             
             if (!interaction.member.permissions.has('ManageChannels')) return interaction.editReply({ content: '❌ No permission!' });
 
@@ -75,6 +74,7 @@ export default [
 
                 if (targetMember) await targetMember.send(tournamentConfig.messages.rejectedDM).catch(() => {});
                 await interaction.channel.delete();
+                await interaction.editReply({ content: '✅ Rejected successfully!' });
 
             } catch (error) {
                 console.error(error);
