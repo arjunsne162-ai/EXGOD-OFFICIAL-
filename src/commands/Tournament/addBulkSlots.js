@@ -1,24 +1,33 @@
+import { ContextMenuCommandBuilder, ApplicationCommandType, PermissionFlagsBits } from 'discord.js';
 import { addPlayerToSlot } from '../../utils/slotManager.js';
 
 export default {
-    name: 'bulk_add_modal',
+    data: new ContextMenuCommandBuilder()
+        .setName('Add Bulk Slots')
+        .setType(ApplicationCommandType.Message)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
         
-        const list = interaction.fields.getTextInputValue('players_list');
-        const lines = list.split('\n');
-        let count = 0;
+        // റൈറ്റ് ക്ലിക്ക് ചെയ്ത മെസ്സേജിലെ ടെക്സ്റ്റ് എടുക്കുന്നു
+        const content = interaction.targetMessage.content;
+        const lines = content.split('\n');
+        let successCount = 0;
 
         for (const line of lines) {
-            const [ign, phone] = line.split('-').map(s => s.trim());
+            if (!line.includes('-')) continue;
+            
+            const lastHyphenIndex = line.lastIndexOf('-');
+            const ign = line.substring(0, lastHyphenIndex).trim();
+            const phone = line.substring(lastHyphenIndex + 1).trim();
+
             if (ign && phone) {
-                // ഇവിടെ നമുക്ക് കൃത്യമായ Discord ID ഇല്ലാത്തതുകൊണ്ട് 
-                // IGN നെ തന്നെ ID ആയി ഉപയോഗിക്കുന്നു
-                addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${count}`, ign, phone);
-                count++;
+                addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
+                successCount++;
             }
         }
 
-        await interaction.editReply({ content: `✅ Successfully added **${count}** players to slots!` });
+        await interaction.editReply({ content: `✅ Successfully added **${successCount}** players from this message!` });
     }
 };
