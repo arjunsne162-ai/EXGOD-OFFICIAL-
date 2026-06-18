@@ -8,9 +8,9 @@ export default {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
     async execute(interaction) {
+        // ബോട്ടിന് മറുപടി തരാൻ കൂടുതൽ സമയം നൽകുന്നു
         await interaction.deferReply({ ephemeral: true });
         
-        // റൈറ്റ് ക്ലിക്ക് ചെയ്ത മെസ്സേജിലെ ടെക്സ്റ്റ് എടുക്കുന്നു
         const content = interaction.targetMessage.content;
         const lines = content.split('\n');
         let successCount = 0;
@@ -23,11 +23,13 @@ export default {
             const phone = line.substring(lastHyphenIndex + 1).trim();
 
             if (ign && phone) {
+                // ലൂപ്പിനുള്ളിൽ ഡാറ്റ ആഡ് ചെയ്യുന്നു
                 addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
                 successCount++;
             }
         }
 
-        await interaction.editReply({ content: `✅ Successfully added **${successCount}** players from this message!` });
+        // ഫൈനൽ മറുപടി
+        await interaction.editReply({ content: `✅ Successfully added **${successCount}** players!` });
     }
 };
