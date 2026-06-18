@@ -46,7 +46,15 @@ export default {
             );
 
             await regChannel.send({ 
-                content: `<@${user.id}> ✅ **Details saved!**\n\n📸 **Action Required:** Please upload your required **Screenshots** here. Staff will approve your registration after verifying the images.`, 
+                content: `<@${user.id}> ✅ **Details saved!**\n\n📸 **Action Required:** Please upload your required **Screenshots** here.
+
+1 ] Follow The Below Given Instagram Page  And Upload Screenshot Here As Proof : https://www.instagram.com/simplebrandpromotors/?utm_source=ig_web_button_share_sheet
+
+2 ] Subscribe The Below Given Youtube Channel  And Upload Screenshot Here As Proof : https://youtube.com/@gamerblack-yt?si=gi1W903yEDU3cCBp 
+
+3 ] Join The Below Given Whatsapp Group And Upload Screenshot Here As Proof :https: //chat.whatsapp.com/KchuW8Qn925EVnLHkw7h1P?s=sh&p=i&ilr=0
+
+Staff will approve your **registration** after verifying the images.`, 
                 embeds: [formEmbed], 
                 components: [staffButtons] 
             });
