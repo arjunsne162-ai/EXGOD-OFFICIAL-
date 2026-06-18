@@ -5,28 +5,31 @@ export default {
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
+        // രജിസ്ട്രേഷൻ പാനലിൽ രജിസ്റ്റർ ചെയ്ത യൂസറുടെ ഐഡി വെച്ച് നോക്കുന്നു
+        const userId = interaction.message.interaction ? interaction.message.interaction.user.id : null;
+        
+        const allSlots = getAllSlots();
+        // ഡിസ്‌കോർഡ് യൂസർ ഐഡി വെച്ച് തിരയുന്നു
+        const player = allSlots.find(p => p.userId === userId);
+
+        // അത് കിട്ടിയില്ലെങ്കിൽ, എംബഡിലെ ഫോൺ നമ്പർ വെച്ച് നോക്കുന്നു
         const embed = interaction.message.embeds[0];
-        if (!embed) return interaction.editReply({ content: '❌ No embed found!' });
-
-        // ലോഗ് ചെയ്ത് നോക്കാം ഫീൽഡുകൾ എന്തൊക്കെയാണെന്ന്
-        console.log("Fields found:", embed.fields.map(f => f.name));
-
-        // കൃത്യമായ ഫീൽഡ് നെയിം വെച്ച് തിരയുന്നു (കേസ് സെൻസിറ്റീവ് അല്ലാതാക്കി)
-        const phoneField = embed.fields.find(f => f.name.toLowerCase() === 'phone');
+        const phoneField = embed?.fields.find(f => f.name.toLowerCase() === 'phone');
         const phone = phoneField ? phoneField.value : null;
 
-        if (!phone) {
-            return interaction.editReply({ content: '❌ Error: Phone field not found in embed. Check the field name.' });
+        const playerByPhone = phone ? allSlots.find(p => p.phone === phone) : null;
+
+        const finalPlayer = player || playerByPhone;
+
+        if (!finalPlayer) {
+            return interaction.editReply({ 
+                content: `❌ Player not found! \nDebug Info: \nUser ID: ${userId}\nPhone: ${phone}` 
+            });
         }
 
-        const allSlots = getAllSlots();
-        const player = allSlots.find(p => p.phone === phone);
+        // സ്റ്റാറ്റസ് അപ്‌ഡേറ്റ് ചെയ്യുന്നു
+        updatePlayerStatus(finalPlayer.phone, 'approved');
 
-        if (!player) {
-            return interaction.editReply({ content: `❌ Player with phone ${phone} not found in database!` });
-        }
-
-        updatePlayerStatus(phone, 'approved');
-        await interaction.editReply({ content: `✅ Registration for **${player.gameName}** is approved!` });
+        await interaction.editReply({ content: `✅ Registration for **${finalPlayer.gameName}** is approved!` });
     }
 };
