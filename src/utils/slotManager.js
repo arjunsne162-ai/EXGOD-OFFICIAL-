@@ -47,3 +47,16 @@ export const clearAllSlots = () => {
     initSlotsFile();
     fs.writeFileSync(slotsFilePath, JSON.stringify([]));
 };
+// ഇതാണ് പുതിയ ഫംഗ്ഷൻ (ഇത് താഴെ ആഡ് ചെയ്യുക)
+export const addBulkPlayer = (ign, phone) => {
+    const slots = getAllSlots();
+    const newPlayer = {
+        discordUsername: "ManualAdd",
+        userId: null,
+        gameName: ign,
+        phone: phone,
+        status: 'approved' // ഇത് ഓട്ടോമാറ്റിക് അപ്രൂവ്ഡ് ആക്കും
+    };
+    slots.push(newPlayer);
+    fs.writeFileSync(slotsFilePath, JSON.stringify(slots, null, 4));
+};

@@ -1,4 +1,4 @@
-import { addPlayerToSlot } from '../../utils/slotManager.js';
+import { addBulkPlayer } from '../../utils/slotManager.js'; // 1. പുതിയ ഫംഗ്‌ഷൻ ഇംപോർട്ട് ചെയ്യുന്നു
 
 export default {
     name: 'bulk_add_modal',
@@ -14,7 +14,6 @@ export default {
             if (!line.trim()) continue;
 
             try {
-                // വരിയുടെ അവസാനത്തെ ഹൈഫൻ കണ്ടെത്തുന്നു (അതുകൊണ്ട് പേരിൽ underscore വന്നാലും പ്രശ്നമില്ല)
                 const lastHyphenIndex = line.lastIndexOf('-');
                 if (lastHyphenIndex === -1) {
                     errorCount++;
@@ -25,8 +24,8 @@ export default {
                 const phone = line.substring(lastHyphenIndex + 1).trim();
 
                 if (ign && phone) {
-                    // സ്ലോട്ട് ആഡ് ചെയ്യുന്നു
-                    addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
+                    // 2. പഴയ addPlayerToSlot മാറ്റി, പുതിയ addBulkPlayer ഉപയോഗിക്കുന്നു
+                    addBulkPlayer(ign, phone); 
                     successCount++;
                 } else {
                     errorCount++;
