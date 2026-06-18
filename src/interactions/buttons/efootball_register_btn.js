@@ -1,39 +1,41 @@
-import { getAllSlots, updateSlotStatus } from '../../utils/slotManager.js';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
 
 export default {
-    name: 'efootball_approve_reg',
+    name: 'efootball_register_btn', // നിന്റെ ബട്ടണിന്റെ customId ഇതാണെന്ന് ഉറപ്പാക്കുക
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
-
-        const embed = interaction.message.embeds[0];
-        const phoneField = embed.fields.find(f => f.name === 'Phone');
-        const phone = phoneField ? phoneField.value : null;
-        
-        // പ്ലെയറുടെ യൂസർനെയിമും എടുക്കുന്നു
-        const userName = interaction.message.interaction ? interaction.message.interaction.user.username : null;
-
-        if (!phone) {
-            return interaction.editReply({ content: '❌ Error: Phone number not found in registration details.' });
-        }
-
-        const allSlots = getAllSlots();
-        
-        // ഇവിടെ നമ്മൾ ഫോൺ നമ്പർ വെച്ചും, പ്ലെയറുടെ പേര് വെച്ചും തിരയുന്നു (ഏത് കിട്ടിയാലും മതി)
-        const player = allSlots.find(p => p.phone === phone || (p.ign && p.ign.toLowerCase() === userName?.toLowerCase()));
-
-        if (!player) {
-            // ഡാറ്റാബേസിൽ ഇല്ലെങ്കിൽ എന്ത് ചെയ്യണമെന്ന് ഇവിടെ ലോഗ് ചെയ്യാം
-            console.log('Searching for phone:', phone);
-            return interaction.editReply({ content: '❌ Player not found in database! Ensure the phone number matches exactly.' });
-        }
-
         try {
-            // സ്റ്റാറ്റസ് അപ്‌ഡേറ്റ് ചെയ്യുന്നു
-            updateSlotStatus(player.id, 'approved');
-            await interaction.editReply({ content: `✅ Successfully approved registration for **${player.ign || 'Player'}**!` });
+            // ഇവിടെ ഒരിക്കലും deferReply() കൊടുക്കരുത്!
+
+            // 1. മോഡൽ (ഫോം) ഉണ്ടാക്കുന്നു
+            const modal = new ModalBuilder()
+                .setCustomId('efootball_reg_modal') // ഇത് നമ്മൾ ശരിയാക്കിയ മോഡലിന്റെ പേരാണ്
+                .setTitle('eFootball Registration');
+
+            // 2. IGN ചോദിക്കുന്ന കളം
+            const gameNameInput = new TextInputBuilder()
+                .setCustomId('game_name')
+                .setLabel("What is your In-Game Name (IGN)?")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            // 3. ഫോൺ നമ്പർ ചോദിക്കുന്ന കളം
+            const phoneInput = new TextInputBuilder()
+                .setCustomId('phone_number')
+                .setLabel("What is your Phone Number?")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            // 4. കളങ്ങൾ ഫോമിലേക്ക് ചേർക്കുന്നു (ഓരോന്നും ഓരോ Row ആയിരിക്കണം)
+            const firstActionRow = new ActionRowBuilder().addComponents(gameNameInput);
+            const secondActionRow = new ActionRowBuilder().addComponents(phoneInput);
+
+            modal.addComponents(firstActionRow, secondActionRow);
+
+            // 5. ഫോം യൂസർക്ക് കാണിച്ചു കൊടുക്കുന്നു
+            await interaction.showModal(modal);
+
         } catch (error) {
-            console.error(error);
-            await interaction.editReply({ content: '❌ Error saving approval status. Check terminal logs.' });
+            console.error("❌ Error showing registration modal:", error);
         }
     }
 };
