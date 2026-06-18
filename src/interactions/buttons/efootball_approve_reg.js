@@ -10,15 +10,14 @@ export default {
         
         const allSlots = getAllSlots();
         // ഡിസ്‌കോർഡ് യൂസർ ഐഡി വെച്ച് തിരയുന്നു
-        const player = allSlots.find(p => p.userId === userId);
-
-        // അത് കിട്ടിയില്ലെങ്കിൽ, എംബഡിലെ ഫോൺ നമ്പർ വെച്ച് നോക്കുന്നു
+        const allSlots = getAllSlots();
+        
+        // ഫോൺ നമ്പർ ഉപയോഗിച്ച് പ്ലെയറെ തിരയുന്നു (String ആയി കൺവേർട്ട് ചെയ്ത്)
         const embed = interaction.message.embeds[0];
         const phoneField = embed?.fields.find(f => f.name.toLowerCase() === 'phone');
-        const phone = phoneField ? phoneField.value : null;
+        const phone = phoneField ? String(phoneField.value).trim() : null;
 
-        const playerByPhone = phone ? allSlots.find(p => p.phone === phone) : null;
-
+        const player = phone ? allSlots.find(p => String(p.phone).trim() === phone) : null;
         const finalPlayer = player || playerByPhone;
 
         if (!finalPlayer) {
