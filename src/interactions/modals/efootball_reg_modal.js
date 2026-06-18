@@ -52,7 +52,7 @@ export default {
 
 2 ] Subscribe The Below Given Youtube Channel  And Upload Screenshot Here As Proof : https://youtube.com/@gamerblack-yt?si=gi1W903yEDU3cCBp 
 
-3 ] Join The Below Given Whatsapp Group And Upload Screenshot Here As Proof :https: //chat.whatsapp.com/KchuW8Qn925EVnLHkw7h1P?s=sh&p=i&ilr=0
+3 ] Join The Below Given Whatsapp Group And Upload Screenshot Here As Proof : https: //chat.whatsapp.com/KchuW8Qn925EVnLHkw7h1P?s=sh&p=i&ilr=0
 
 Staff will approve your **registration** after verifying the images.`, 
                 embeds: [formEmbed], 
