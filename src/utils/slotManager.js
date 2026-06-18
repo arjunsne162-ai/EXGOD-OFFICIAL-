@@ -1,5 +1,5 @@
 import fs from 'fs';
-const slotsFilePath = './slots.json'; // നിന്റെ ഫയൽ പാത്ത് ശരിയാണെന്ന് ഉറപ്പാക്കുക
+const slotsFilePath = './slots.json';
 
 export const getAllSlots = () => {
     if (!fs.existsSync(slotsFilePath)) return [];
@@ -9,13 +9,14 @@ export const getAllSlots = () => {
 
 export const addBulkPlayer = (ign, phone) => {
     const slots = getAllSlots();
-    // ഒരേ ഫോൺ നമ്പർ ഉള്ളവരെ ആഡ് ചെയ്യാതിരിക്കാൻ
-    if (slots.find(p => p.phone === phone)) return;
+    // രണ്ടിനെയും String ആക്കി മാറ്റി സ്പേസ് കളഞ്ഞു ചെക്ക് ചെയ്യുന്നു
+    const cleanPhone = String(phone).trim();
+    if (slots.find(p => String(p.phone).trim() === cleanPhone)) return;
     
     slots.push({
-        id: phone, 
+        id: cleanPhone, 
         gameName: ign,
-        phone: phone,
+        phone: cleanPhone,
         status: 'approved'
     });
     fs.writeFileSync(slotsFilePath, JSON.stringify(slots, null, 4));
@@ -23,7 +24,10 @@ export const addBulkPlayer = (ign, phone) => {
 
 export const updatePlayerStatus = (phone, status) => {
     const slots = getAllSlots();
-    const player = slots.find(p => p.phone === phone);
+    // ഇവിടെയും String ആക്കി മാറ്റി ചെക്ക് ചെയ്യുന്നു
+    const cleanPhone = String(phone).trim();
+    const player = slots.find(p => String(p.phone).trim() === cleanPhone);
+    
     if (player) {
         player.status = status;
         fs.writeFileSync(slotsFilePath, JSON.stringify(slots, null, 4));
