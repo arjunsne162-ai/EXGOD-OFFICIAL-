@@ -1,24 +1,42 @@
-import { SlashCommandBuilder, PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
+import { addPlayerToSlot } from '../../utils/slotManager.js';
 
 export default {
-    data: new SlashCommandBuilder()
-        .setName('add-bulk-slots')
-        .setDescription('Add multiple players at once using a list.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
-
+    name: 'bulk_add_modal',
     async execute(interaction) {
-        const modal = new ModalBuilder()
-            .setCustomId('bulk_add_modal')
-            .setTitle('Add Multiple Players');
+        await interaction.deferReply({ ephemeral: true });
+        
+        const list = interaction.fields.getTextInputValue('players_list');
+        const lines = list.split('\n');
+        let successCount = 0;
+        let errorCount = 0;
 
-        const playersInput = new TextInputBuilder()
-            .setCustomId('players_list')
-            .setLabel("Enter Players (IGN - Phone)")
-            .setPlaceholder("Arjun - 9876543210\nSmars - 9988776655")
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(true);
+        for (const line of lines) {
+            if (!line.trim()) continue; // ഒഴിഞ്ഞ വരികൾ ഒഴിവാക്കുന്നു
 
-        modal.addComponents(new ActionRowBuilder().addComponents(playersInput));
-        await interaction.showModal(modal);
+            try {
+                // അവസാനത്തെ ഹൈഫൻ വെച്ച് മാത്രം സ്പ്ലിറ്റ് ചെയ്യുന്നു (ഇത് കൂടുതൽ സേഫ് ആണ്)
+                const lastHyphenIndex = line.lastIndexOf('-');
+                if (lastHyphenIndex === -1) {
+                    errorCount++;
+                    continue;
+                }
+
+                const ign = line.substring(0, lastHyphenIndex).trim();
+                const phone = line.substring(lastHyphenIndex + 1).trim();
+
+                if (ign && phone) {
+                    addPlayerToSlot('ManualPlayer', `manual_${Date.now()}_${successCount}`, ign, phone);
+                    successCount++;
+                } else {
+                    errorCount++;
+                }
+            } catch (e) {
+                errorCount++;
+            }
+        }
+
+        await interaction.editReply({ 
+            content: `✅ Successfully added **${successCount}** players!\n❌ Failed lines: **${errorCount}**` 
+        });
     }
 };
