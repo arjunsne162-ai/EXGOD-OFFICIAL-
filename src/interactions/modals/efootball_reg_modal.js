@@ -1,52 +1,58 @@
-import { ChannelType, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder } from 'discord.js';
-import { getAllSlots } from '../../utils/slotManager.js'; // ഇത് കൂടെ ആഡ് ചെയ്യുക
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, ChannelType } from 'discord.js';
+import { addPlayer } from '../../utils/slotManager.js';
 
 export default {
     name: 'efootball_reg_modal',
-    async execute(interaction, client) {
+    async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
-        const { guild, user } = interaction;
-        
-        // 1. ഒരാൾ ഓൾറെഡി രജിസ്റ്റർ ചെയ്തിട്ടുണ്ടോ എന്ന് ചെക്ക് ചെയ്യുന്നു
-        const allSlots = getAllSlots();
-        const existingPlayer = allSlots.find(p => p.userId === user.id);
-        
-        if (existingPlayer) {
-            return interaction.editReply({ content: '❌ You have already registered for this tournament!' });
-        }
-
+        // നിന്റെ ഫോമിൽ നിന്നുള്ള ഡാറ്റ എടുക്കുന്നു
         const gameName = interaction.fields.getTextInputValue('game_name');
         const phone = interaction.fields.getTextInputValue('phone_number');
+        const userId = interaction.user.id;
 
         try {
-            // 2. ചാനൽ ക്രിയേറ്റ് ചെയ്യുന്നു (ബാക്കി കോഡ് പഴയത് പോലെ)
-            const regChannel = await guild.channels.create({
-                name: `reg-${user.username}`,
+            // 1. പ്രൈവറ്റ് ചാനൽ ക്രിയേറ്റ് ചെയ്യുന്നു
+            const regChannel = await interaction.guild.channels.create({
+                name: `reg-${interaction.user.username}`,
                 type: ChannelType.GuildText,
                 permissionOverwrites: [
-                    { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-                    { id: user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles] },
+                    {
+                        id: interaction.guild.roles.everyone.id,
+                        deny: [PermissionFlagsBits.ViewChannel],
+                    },
+                    {
+                        id: userId,
+                        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles],
+                    },
                 ],
             });
 
-            // ... (ബാക്കി കോഡ് പഴയത് പോലെ തന്നെ - Embed ഉം Buttons ഉം)
-            const formEmbed = new EmbedBuilder()
-                .setTitle(`📝 Registration: ${user.username}`)
-                .setDescription('**Player Details Saved!**')
-                .addFields(
-                    { name: 'IGN', value: gameName, inline: true },
-                    { name: 'Phone', value: phone, inline: true }
-                )
-                .setColor('#0099ff');
+            // 2. പ്ലെയറുടെ ഡാറ്റ സേവ് ചെയ്യുന്നു
+            const success = addPlayer(gameName, phone, userId);
+            
+            if (!success) {
+                return interaction.editReply({ content: '❌ You have already registered for this tournament!' });
+            }
 
+            // 3. അപ്രൂവ് / റിജക്ട് ബട്ടണുകൾ ഉണ്ടാക്കുന്നു
             const staffButtons = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('efootball_approve_reg').setLabel('Approve').setStyle(ButtonStyle.Success),
                 new ButtonBuilder().setCustomId('efootball_reject_reg').setLabel('Reject').setStyle(ButtonStyle.Danger)
             );
 
-            await regChannel.send({ 
-                content: `<@${user.id}> ✅ **Details saved!**\n\n📸 **Action Required:** Please upload your required **Screenshots** here.
+            // 4. എംബഡ് ഉണ്ടാക്കുന്നു
+            const formEmbed = new EmbedBuilder()
+                .setTitle('Registration Details Saved!')
+                .setColor('#00ff00')
+                .addFields(
+                    { name: 'IGN', value: gameName, inline: true },
+                    { name: 'Phone', value: phone, inline: true }
+                );
+
+            // 5. പുതിയ ചാനലിലേക്ക് മെസ്സേജ് അയക്കുന്നു
+            await regChannel.send({
+                content: `<@${userId}> ✅ **Details saved!**\n\n📸 **Action Required:** Please upload your required Screenshots here.
 
 1 ] Follow The Below Given Instagram Page  And Upload Screenshot Here As Proof : https://www.instagram.com/simplebrandpromotors/?utm_source=ig_web_button_share_sheet
 
@@ -54,15 +60,16 @@ export default {
 
 3 ] Join The Below Given Whatsapp Group And Upload Screenshot Here As Proof : https://chat.whatsapp.com/KchuW8Qn925EVnLHkw7h1P?s=sh&p=i&ilr=0
 
-Staff will approve your **registration** after verifying the images.`, 
-                embeds: [formEmbed], 
-                components: [staffButtons] 
+Staff will approve your registration after verifying the images.`,
+                embeds: [formEmbed],
+                components: [staffButtons]
             });
 
-            await interaction.editReply({ content: `✅ Details submitted! Please go to your channel to upload screenshots: ${regChannel}` });
+            // 6. റിപ്ലൈ കൊടുക്കുന്നു
+            await interaction.editReply({ content: `✅ Details submitted! Please go to your channel to upload screenshots: <#${regChannel.id}>` });
 
         } catch (error) {
-            console.error(error);
+            console.error("❌ Registration Modal Error:", error);
             await interaction.editReply({ content: '❌ Error processing your registration.' });
         }
     }

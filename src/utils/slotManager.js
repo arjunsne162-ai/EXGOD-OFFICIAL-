@@ -1,41 +1,34 @@
 import fs from 'fs';
-import path from 'path';
-
 const slotsFilePath = './slots.json';
 
 export const getAllSlots = () => {
-    try {
-        if (!fs.existsSync(slotsFilePath)) {
-            fs.writeFileSync(slotsFilePath, JSON.stringify([]));
-            return [];
-        }
-        const rawData = fs.readFileSync(slotsFilePath, 'utf8');
-        return JSON.parse(rawData);
-    } catch (error) {
-        console.error("❌ Error reading slots.json:", error);
+    if (!fs.existsSync(slotsFilePath)) {
+        fs.writeFileSync(slotsFilePath, JSON.stringify([]));
         return [];
     }
+    return JSON.parse(fs.readFileSync(slotsFilePath, 'utf8'));
 };
 
-export const addBulkPlayer = (ign, phone) => {
+export const addPlayer = (ign, phone, userId) => {
     const slots = getAllSlots();
     const cleanPhone = String(phone).trim();
-    if (slots.find(p => String(p.phone).trim() === cleanPhone)) return;
+    if (slots.find(p => String(p.phone).trim() === cleanPhone)) return false;
     
     slots.push({
         id: cleanPhone,
         gameName: ign,
         phone: cleanPhone,
-        status: 'approved'
+        userId: userId,
+        status: 'pending'
     });
     fs.writeFileSync(slotsFilePath, JSON.stringify(slots, null, 4));
+    return true;
 };
 
 export const updatePlayerStatus = (phone, status) => {
     const slots = getAllSlots();
     const cleanPhone = String(phone).trim();
     const player = slots.find(p => String(p.phone).trim() === cleanPhone);
-    
     if (player) {
         player.status = status;
         fs.writeFileSync(slotsFilePath, JSON.stringify(slots, null, 4));
